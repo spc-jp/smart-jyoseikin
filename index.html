@@ -2,86 +2,417 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Smart助成金シグナル | AI提案検知</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart助成金シグナル</title>
+  
+  <!-- ファビコンの設定 -->
+  <link rel="icon" type="image/png" href="https://spc-jp.github.io/smart-jyoseikin/favicon.png">
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome (アイコン用) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel (ブラウザでのJSX変換用) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-    body { font-family: 'Noto Sans JP', sans-serif; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    }
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
-  <div class="flex">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-white min-h-screen p-6 hidden md:block">
-      <div class="flex items-center space-x-3 mb-10">
-        <i class="fas fa-yen-sign text-blue-500 text-2xl"></i>
-        <h1 class="font-bold text-lg leading-tight">Smart<br/>助成金シグナル</h1>
-      </div>
-      <nav class="space-y-4">
-        <a href="#" class="flex items-center text-blue-400 font-bold bg-blue-500/10 p-3 rounded-xl">
-          <i class="fas fa-satellite-dish mr-3"></i> 提案アラート
-        </a>
-        <a href="#" class="flex items-center text-slate-400 p-3 rounded-xl hover:bg-white/5 transition-colors">
-          <i class="fas fa-building mr-3"></i> 顧問先一覧
-        </a>
-        <a href="#" class="flex items-center text-slate-400 p-3 rounded-xl hover:bg-white/5 transition-colors">
-          <i class="fas fa-database mr-3"></i> 助成金DB
-        </a>
-      </nav>
-    </aside>
+<body class="bg-gray-50 text-gray-800">
+  <div id="root"></div>
 
-    <!-- Main -->
-    <main class="flex-1 p-6 md:p-12">
-      <header class="flex justify-between items-center mb-10">
-        <h2 class="text-2xl font-bold text-slate-800">最新のアラートシグナル</h2>
-        <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold border border-blue-200">
-          監視中：18社
-        </div>
-      </header>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-      <div class="grid gap-6">
-        <!-- Alert 1 -->
-        <div class="bg-white p-6 md:p-8 rounded-[24px] shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-blue-200 transition-all">
-          <div class="flex items-start">
-            <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mr-4 shrink-0">
-              <i class="fas fa-bell animate-pulse"></i>
+    // ==========================================
+    // コンポーネント: ナビゲーションアイテム
+    // ==========================================
+    function NavItem({ iconClass, label, isActive, onClick }) {
+      return (
+        <button
+          onClick={onClick}
+          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+            isActive 
+              ? 'bg-blue-600 text-white shadow-md' 
+              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <i className={`${iconClass} text-lg w-6 text-center`}></i>
+          <span className="font-medium text-left leading-tight">{label}</span>
+        </button>
+      );
+    }
+
+    // ==========================================
+    // コンポーネント: KPIカード
+    // ==========================================
+    function KpiCard({ title, amount, subtitle, iconClass, colorClass }) {
+      const bgColors = {
+        blue: 'bg-blue-50 text-blue-500',
+        emerald: 'bg-emerald-50 text-emerald-500',
+        rose: 'bg-rose-50 text-rose-500',
+      };
+      return (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-4">
+            <h4 className="text-gray-500 font-medium text-sm">{title}</h4>
+            <div className={`p-3 rounded-lg ${bgColors[colorClass]}`}>
+              <i className={`${iconClass} text-xl`}></i>
             </div>
-            <div>
-              <div class="flex items-center space-x-2 mb-1">
-                <span class="text-xs font-bold text-slate-400">株式会社テックフロンティア</span>
-                <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded uppercase font-bold text-slate-500">勤怠連携済</span>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">{amount}</div>
+            <p className="text-xs text-gray-400">{subtitle}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // タブ: ダッシュボード
+    // ==========================================
+    function Dashboard({ alerts, companies, grants, onStatusChange }) {
+      const activeAlerts = alerts.filter(a => a.status === '未対応');
+      const inProgressAlerts = alerts.filter(a => a.status === '提案中');
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg flex items-center justify-between relative overflow-hidden">
+            <div className="relative z-10">
+              <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-bold mb-4">
+                <i className="fas fa-sparkles mr-1"></i> 提案のチャンスを逃さない
+              </span>
+              <h3 className="text-3xl font-bold mb-2">見落としていませんか？<br/>顧問先の「申請タイミング」</h3>
+              <p className="text-blue-100 mt-2">勤怠・人事データからAIが自動検知した最新の提案シグナルです。</p>
+            </div>
+            <div className="hidden md:block opacity-20 absolute -right-4 -bottom-4">
+              <i className="fas fa-satellite-dish text-[10rem]"></i>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <KpiCard 
+              title="未対応の新規シグナル" 
+              amount={`${activeAlerts.length}件`} 
+              subtitle="優先して確認してください"
+              iconClass="fas fa-bell"
+              colorClass="rose"
+            />
+            <KpiCard 
+              title="提案中の助成金" 
+              amount={`${inProgressAlerts.length}件`} 
+              subtitle="顧問先へのヒアリング進行中"
+              iconClass="fas fa-comments"
+              colorClass="blue"
+            />
+            <KpiCard 
+              title="今月の想定受給総額" 
+              amount="約 320 万円" 
+              subtitle="※提案がすべて通った場合の試算"
+              iconClass="fas fa-chart-line"
+              colorClass="emerald"
+            />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800">
+                <i className="fas fa-exclamation-circle text-blue-600 mr-2"></i>
+                検知された提案シグナル一覧
+              </h3>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {alerts.filter(a => a.status !== '対応済').map(alert => {
+                const company = companies.find(c => c.id === alert.companyId);
+                const grant = grants.find(g => g.id === alert.grantId);
+                return (
+                  <div key={alert.id} className="p-6 hover:bg-blue-50/30 transition-colors flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+                    <div className="flex flex-col space-y-2 w-32 shrink-0">
+                      <span className={`px-2 py-1 rounded text-xs font-bold text-center ${
+                        alert.status === '未対応' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {alert.status}
+                      </span>
+                      {alert.level === 'high' && (
+                        <span className="text-xs font-bold text-rose-600 flex items-center justify-center">
+                          <i className="fas fa-fire mr-1"></i> 重要度: 高
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400 text-center">{alert.date}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-bold text-gray-600 border border-gray-300 px-2 py-0.5 rounded bg-white">
+                          {company?.name}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded flex items-center">
+                          <i className="fas fa-link mr-1"></i>{company?.system}から連携
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-2">{alert.title}</h4>
+                      <p className="text-sm text-gray-600 mb-3">{alert.message}</p>
+                      <div className="inline-flex items-center bg-indigo-50 border border-indigo-100 rounded px-3 py-1.5">
+                        <i className="fas fa-file-invoice-dollar text-indigo-500 mr-2"></i>
+                        <div>
+                          <p className="text-xs text-indigo-800 font-bold leading-tight">{grant?.name}</p>
+                          <p className="text-[10px] text-indigo-600 leading-tight">想定額: {grant?.amount}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-2 shrink-0 w-full lg:w-48">
+                      {alert.status === '未対応' ? (
+                        <>
+                          <button 
+                            onClick={() => onStatusChange(alert.id, '提案中')}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm"
+                          >
+                            提案ステータスにする
+                          </button>
+                        </>
+                      ) : (
+                        <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm flex items-center justify-center">
+                          <i className="fas fa-envelope mr-1"></i> 顧問先へ連絡
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => onStatusChange(alert.id, alert.status === '未対応' ? '詳細' : '対応済')}
+                        className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded text-sm font-medium transition-colors"
+                      >
+                        {alert.status === '未対応' ? '詳細を確認' : '完了にする'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // タブ: 顧問先一覧
+    // ==========================================
+    function CompaniesList({ companies, alerts }) {
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-800">データ連携中の顧問先一覧</h3>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+              <i className="fas fa-plus mr-1"></i> 新規連携
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+                  <th className="p-4 font-semibold">顧問先名</th>
+                  <th className="p-4 font-semibold">従業員数</th>
+                  <th className="p-4 font-semibold">連携システム</th>
+                  <th className="p-4 font-semibold text-center">現在のアラート</th>
+                  <th className="p-4 font-semibold"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {companies.map(c => {
+                  const activeCount = alerts.filter(a => a.companyId === c.id && a.status === '未対応').length;
+                  return (
+                    <tr key={c.id} className="hover:bg-gray-50/50">
+                      <td className="p-4 font-bold text-gray-800">{c.name}</td>
+                      <td className="p-4 text-gray-600">{c.empCount} 名</td>
+                      <td className="p-4">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                          {c.system}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        {activeCount > 0 ? (
+                          <span className="inline-flex items-center justify-center bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">
+                            {activeCount}件
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button className="text-blue-600 text-sm hover:underline font-medium">詳細</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // タブ: 助成金データベース
+    // ==========================================
+    function GrantsDatabase({ grants }) {
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-800">最新の助成金データベース</h3>
+            <div className="relative w-64">
+              <input type="text" placeholder="助成金名で検索..." className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {grants.map(g => (
+              <div key={g.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <h4 className="text-lg font-bold text-blue-800 mb-2">{g.name}</h4>
+                <div className="mb-4">
+                  <span className="inline-block bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded">
+                    支給額: {g.amount}
+                  </span>
+                </div>
+                <h5 className="text-xs font-bold text-gray-500 mb-1">主な対象要件</h5>
+                <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded">
+                  {g.target}
+                </p>
               </div>
-              <h3 class="text-xl font-bold text-slate-900 mb-2">キャリアアップ助成金の要件を満たしました</h3>
-              <p class="text-sm text-slate-500">有期雇用の従業員3名が雇用から6ヶ月を経過しました。正社員化への転換提案のベストタイミングです。</p>
-            </div>
-          </div>
-          <div class="w-full md:w-auto">
-            <button class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all">提案書を作成</button>
+            ))}
           </div>
         </div>
+      );
+    }
 
-        <!-- Alert 2 -->
-        <div class="bg-white p-6 md:p-8 rounded-[24px] shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-blue-200 transition-all">
-          <div class="flex items-start">
-            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mr-4 shrink-0">
-              <i class="fas fa-info-circle"></i>
-            </div>
-            <div>
-              <div class="flex items-center space-x-2 mb-1">
-                <span class="text-xs font-bold text-slate-400">デザインワークス合同会社</span>
-                <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded uppercase font-bold text-slate-500">人事連携済</span>
+    // ==========================================
+    // メインアプリケーション
+    // ==========================================
+    function App() {
+      const [activeTab, setActiveTab] = useState('dashboard');
+
+      const [companies] = useState([
+        { id: 1, name: '株式会社テックフロンティア', empCount: 15, system: 'SmartHR' },
+        { id: 2, name: 'デザインワークス合同会社', empCount: 8, system: 'マネーフォワード' },
+        { id: 3, name: '青木工務店', empCount: 22, system: 'ジョブカン' },
+        { id: 4, name: '株式会社ライフケア', empCount: 45, system: 'KING OF TIME' },
+      ]);
+
+      const [grants] = useState([
+        { id: 'g1', name: 'キャリアアップ助成金（正社員化コース）', amount: '最大80万円/人', target: '有期契約労働者等を正規雇用労働者に転換等した事業主' },
+        { id: 'g2', name: '両立支援等助成金（出生時両立支援コース）', amount: '最大60万円', target: '男性労働者が育児休業を取得しやすい職場風土作りに取り組み、育休を取得させた事業主' },
+        { id: 'g3', name: '業務改善助成金', amount: '最大600万円', target: '事業場内最低賃金を一定額以上引き上げ、設備投資等を行った中小企業事業主' },
+      ]);
+
+      const [alerts, setAlerts] = useState([
+        { id: 101, companyId: 1, grantId: 'g1', level: 'high', title: '有期雇用6ヶ月経過の従業員が3名います', message: '正社員転換によるキャリアアップ助成金の提案チャンスです。来月の面談での案内を推奨します。', date: '2026-05-04', status: '未対応' },
+        { id: 102, companyId: 4, grantId: 'g2', level: 'high', title: '男性従業員から配偶者の出産予定日申請がありました', message: '産後パパ育休の取得推進により、両立支援等助成金が申請できる可能性があります。', date: '2026-05-02', status: '未対応' },
+        { id: 103, companyId: 2, grantId: 'g3', level: 'medium', title: 'PCの新規購入履歴が検知されました（API連携）', message: '賃金引き上げと組み合わせることで業務改善助成金の対象となるかヒアリングを推奨します。', date: '2026-05-01', status: '提案中' },
+        { id: 104, companyId: 3, grantId: 'g1', level: 'low', title: '非正規従業員の残業時間が増加傾向です', message: '労働条件の見直しとともに、助成金を活用した処遇改善の提案が可能です。', date: '2026-04-28', status: '対応済' },
+      ]);
+
+      const handleStatusChange = (alertId, newStatus) => {
+        if (newStatus === '詳細') return;
+        setAlerts(alerts.map(a => a.id === alertId ? { ...a, status: newStatus } : a));
+      };
+
+      return (
+        <div className="flex h-screen overflow-hidden">
+          {/* サイドバー */}
+          <aside className="w-64 bg-slate-900 text-white flex flex-col shrink-0">
+            <div className="p-6 flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                <i className="fas fa-search text-xl text-white"></i>
               </div>
-              <h3 class="text-xl font-bold text-slate-900 mb-2">両立支援等助成金（育休）の可能性</h3>
-              <p class="text-sm text-slate-500">男性従業員から配偶者の出産予定申請がありました。産後パパ育休の取得推進により助成金の対象となります。</p>
+              <h1 className="text-xl font-bold tracking-wider leading-tight">Smart<br/>助成金シグナル</h1>
             </div>
-          </div>
-          <div class="w-full md:w-auto text-center">
-            <button class="text-blue-600 font-bold hover:underline">詳細を確認 <i class="fas fa-arrow-right text-xs"></i></button>
+            
+            <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+              <NavItem 
+                iconClass="fas fa-bell" 
+                label="シグナル・ダッシュボード" 
+                isActive={activeTab === 'dashboard'} 
+                onClick={() => setActiveTab('dashboard')} 
+              />
+              <NavItem 
+                iconClass="fas fa-building" 
+                label="顧問先状況一覧" 
+                isActive={activeTab === 'companies'} 
+                onClick={() => setActiveTab('companies')} 
+              />
+              <NavItem 
+                iconClass="fas fa-database" 
+                label="助成金データベース" 
+                isActive={activeTab === 'grants'} 
+                onClick={() => setActiveTab('grants')} 
+              />
+            </nav>
+
+            <div className="p-4 m-4 bg-slate-800 rounded-xl">
+              <p className="text-xs text-slate-400">ログイン中</p>
+              <div className="flex items-center space-x-2 mt-1">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <i className="fas fa-user-tie text-xs"></i>
+                </div>
+                <span className="text-sm font-medium">スマート社労士法人</span>
+              </div>
+            </div>
+          </aside>
+
+          {/* メインエリア */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-20">
+              <h2 className="text-2xl font-semibold text-gray-800">
+                {activeTab === 'dashboard' && 'シグナル・ダッシュボード'}
+                {activeTab === 'companies' && '顧問先データ連携状況'}
+                {activeTab === 'grants' && '最新助成金データベース'}
+              </h2>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500 flex items-center">
+                  <i className="fas fa-sync-alt mr-1"></i> 最終同期: 本日 06:00
+                </span>
+                <button className="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded shadow-sm text-sm hover:bg-gray-50 transition-colors">
+                  手動同期
+                </button>
+              </div>
+            </header>
+
+            <main className="p-8 overflow-y-auto flex-1">
+              {activeTab === 'dashboard' && (
+                <Dashboard alerts={alerts} companies={companies} grants={grants} onStatusChange={handleStatusChange} />
+              )}
+              {activeTab === 'companies' && (
+                <CompaniesList companies={companies} alerts={alerts} />
+              )}
+              {activeTab === 'grants' && (
+                <GrantsDatabase grants={grants} />
+              )}
+            </main>
           </div>
         </div>
-      </div>
-    </main>
-  </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>

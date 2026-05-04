@@ -309,11 +309,14 @@ export default function App() {
 
   // ファビコンの設定（ブラウザのタブ用）
   useEffect(() => {
-    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
     link.type = 'image/png';
-    link.rel = 'icon';
     link.href = faviconUrl;
-    document.getElementsByTagName('head')[0].appendChild(link);
   }, []);
 
   // ダミーデータ：顧問先企業
@@ -357,18 +360,17 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className="flex h-screen bg-gray-50 text-gray-800 font-sans overflow-hidden">
       {/* サイドバー */}
-      <div className="w-64 bg-slate-900 text-white flex flex-col shrink-0">
-        <div className="p-6 flex items-center space-x-3">
-          {/* ヘッダー部分は元のデザイン通りSearchアイコンに戻しました */}
+      <div className="w-64 bg-slate-900 text-white flex flex-col shrink-0 h-full">
+        <div className="p-6 flex items-center space-x-3 shrink-0">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
             <Search className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-bold tracking-wider leading-tight">Smart<br/>助成金シグナル</h1>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
           <NavItem 
             icon={Bell} 
             label="シグナル・ダッシュボード" 
@@ -389,7 +391,7 @@ export default function App() {
           />
         </nav>
 
-        <div className="p-4 m-4 bg-slate-800 rounded-xl">
+        <div className="p-4 m-4 bg-slate-800 rounded-xl shrink-0">
           <p className="text-xs text-slate-400">ログイン中</p>
           <div className="flex items-center space-x-2 mt-1">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -401,8 +403,8 @@ export default function App() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="flex-1 overflow-auto flex flex-col">
-        <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-20">
+      <div className="flex-1 overflow-auto flex flex-col h-full">
+        <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-20 shrink-0">
           <h2 className="text-2xl font-semibold text-gray-800">
             {activeTab === 'dashboard' && 'シグナル・ダッシュボード'}
             {activeTab === 'companies' && '顧問先データ連携状況'}
@@ -418,7 +420,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="p-8 flex-1">
+        <main className="p-8 flex-1 overflow-y-auto">
           {renderContent()}
         </main>
       </div>

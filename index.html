@@ -307,7 +307,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const faviconUrl = "https://spc-jp.github.io/smart-jyoseikin/favicon.png";
 
-  // ファビコンの設定
+  // ファビコンの設定（ブラウザのタブ用）
   useEffect(() => {
     const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
     link.type = 'image/png';
@@ -361,8 +361,9 @@ export default function App() {
       {/* サイドバー */}
       <div className="w-64 bg-slate-900 text-white flex flex-col shrink-0">
         <div className="p-6 flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
-            <img src={faviconUrl} alt="Logo" className="w-8 h-8 object-contain" />
+          {/* ヘッダー部分は元のデザイン通りSearchアイコンに戻しました */}
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+            <Search className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-bold tracking-wider leading-tight">Smart<br/>助成金シグナル</h1>
         </div>
